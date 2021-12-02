@@ -17,7 +17,7 @@ struct SpinLock {
 	std::atomic<bool> locked{false};
 
 	void lock() {
-		while (locked.exchange(true)) {
+		while (locked.exchange(true, std::memory_order_acquire)) {
 			// busy wait
 			/*
 			std::this_thread::yield();
@@ -26,7 +26,7 @@ struct SpinLock {
 	}
 
 	void unlock() {
-		locked.store(false);
+		locked.store(false, std::memory_order_release);
 	}
 };
 
