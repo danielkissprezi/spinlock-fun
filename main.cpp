@@ -57,22 +57,9 @@ static SpinLock g_lock;
 int main() {
 	g_lock.lock();
 
-	pthread_attr_t attr;
-	if (pthread_attr_init(&attr)) HANDLE_ERROR(1, "pthread_attr_init");
-	auto err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
-	if (err) HANDLE_ERROR(err, "setschedpolicy");
-
 	struct sched_param param;
-	param.sched_priority = sched_get_priority_min(SCHED_RR);
-
-	err = pthread_attr_setschedparam(&attr, &param);
-	if (err) HANDLE_ERROR(err, "pthread_attr_setschedparam");
-
-	pthread_t primaryThread;
-	err = pthread_create(&primaryThread, &attr, MainThread, &g_lock);
-	if (err) HANDLE_ERROR(err, "pthread_create");
-
-	err = pthread_attr_init(&attr);
+	pthread_attr_t attr;
+	auto err = pthread_attr_init(&attr);
 	if (err) HANDLE_ERROR(1, "pthread_attr_init");
 	param.sched_priority = sched_get_priority_max(SCHED_RR);
 
@@ -88,6 +75,23 @@ int main() {
 		err = pthread_create(&id, &attr, HeavyContender, &g_lock);
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
+
+	//
+	// setup the primary thread
+	//
+	if (pthread_attr_init(&attr)) HANDLE_ERROR(1, "pthread_attr_init");
+	err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
+	if (err) HANDLE_ERROR(err, "setschedpolicy");
+
+	param.sched_priority = sched_get_priority_min(SCHED_RR);
+
+	err = pthread_attr_setschedparam(&attr, &param);
+	if (err) HANDLE_ERROR(err, "pthread_attr_setschedparam");
+
+	pthread_t primaryThread;
+	err = pthread_create(&primaryThread, &attr, MainThread, &g_lock);
+	if (err) HANDLE_ERROR(err, "pthread_create");
+
 
 	err = pthread_join(primaryThread, nullptr);
 	if (err) HANDLE_ERROR(err, "pthread_join");
