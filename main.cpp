@@ -33,9 +33,7 @@ struct SpinLock {
 static void* HeavyContender(void* param) {
 	auto* l = (SpinLock*)param;
 
-	for (;;) {
-		l->lock();
-	}
+	l->lock();
 
 	return nullptr;
 }
