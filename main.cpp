@@ -30,15 +30,6 @@ struct SpinLock {
 	}
 };
 
-static void* MainThread(void* param) {
-	auto* l = (SpinLock*)param;
-
-	sleep(1);  // sleep 1 seconds
-	l->unlock();
-
-	return nullptr;
-}
-
 static void* HeavyContender(void* param) {
 	auto* l = (SpinLock*)param;
 
@@ -76,25 +67,8 @@ int main() {
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
 
-	//
-	// setup the primary thread
-	//
-	if (pthread_attr_init(&attr)) HANDLE_ERROR(1, "pthread_attr_init");
-	err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
-	if (err) HANDLE_ERROR(err, "setschedpolicy");
-
-	param.sched_priority = sched_get_priority_min(SCHED_RR);
-
-	err = pthread_attr_setschedparam(&attr, &param);
-	if (err) HANDLE_ERROR(err, "pthread_attr_setschedparam");
-
-	pthread_t primaryThread;
-	err = pthread_create(&primaryThread, &attr, MainThread, &g_lock);
-	if (err) HANDLE_ERROR(err, "pthread_create");
-
-
-	err = pthread_join(primaryThread, nullptr);
-	if (err) HANDLE_ERROR(err, "pthread_join");
+	sleep(1);
+	g_lock.unlock();
 
 	return 0;
 }
