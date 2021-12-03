@@ -37,7 +37,6 @@ static void* HeavyContender(void* param) {
 		l->lock();
 		// prevent optimization
 		asm volatile("nop\n\t" : "=m"(l));
-		l->unlock();
 	}
 
 	return nullptr;
@@ -69,7 +68,8 @@ static SpinLock g_locks[2];
 int main() {
 	g_locks[0].lock();
 
-	StartWorkerThreads(16, &g_locks[1]);
+	const auto concurrency = std::thread::hardware_concurrency();
+	StartWorkerThreads(concurrency, &g_locks[1]);
 
 	g_locks[0].unlock();
 
