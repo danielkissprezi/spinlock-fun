@@ -43,10 +43,10 @@ static void* HeavyContender(void* param) {
 	return nullptr;
 }
 
-static SpinLock g_lock;
+static SpinLock g_locks[2];
 
 int main() {
-	g_lock.lock();
+	g_locks[0].lock();
 
 	struct sched_param param;
 	pthread_attr_t attr;
@@ -63,12 +63,12 @@ int main() {
 	// end up with virtual cores + 1 threads in total
 	for (int i = 0; i < 16; ++i) {
 		pthread_t id;
-		err = pthread_create(&id, &attr, HeavyContender, &g_lock);
+		err = pthread_create(&id, &attr, HeavyContender, &g_locks[1]);
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
 
 	sleep(1);
-	g_lock.unlock();
+	g_locks[0].unlock();
 
 	return 0;
 }
