@@ -43,11 +43,7 @@ static void* HeavyContender(void* param) {
 	return nullptr;
 }
 
-static SpinLock g_locks[2];
-
-int main() {
-	g_locks[0].lock();
-
+static void StartWorkerThreads(size_t count, SpinLock* lock) {
 	struct sched_param param;
 	pthread_attr_t attr;
 	auto err = pthread_attr_init(&attr);
@@ -61,13 +57,20 @@ int main() {
 	if (err) HANDLE_ERROR(err, "setschedpolicy");
 
 	// end up with virtual cores + 1 threads in total
-	for (int i = 0; i < 16; ++i) {
+	for (int i = 0; i < count; ++i) {
 		pthread_t id;
-		err = pthread_create(&id, &attr, HeavyContender, &g_locks[1]);
+		err = pthread_create(&id, &attr, HeavyContender, lock);
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
+}
 
-	sleep(1);
+static SpinLock g_locks[2];
+
+int main() {
+	g_locks[0].lock();
+
+	StartWorkerThreads(16, &g_locks[1]);
+
 	g_locks[0].unlock();
 
 	return 0;
