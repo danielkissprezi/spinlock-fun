@@ -35,8 +35,6 @@ static void* HeavyContender(void* param) {
 
 	for (;;) {
 		l->lock();
-		// prevent optimization
-		asm volatile("nop\n\t" : "=m"(l));
 	}
 
 	return nullptr;
@@ -55,7 +53,6 @@ static void StartWorkerThreads(size_t count, SpinLock* lock) {
 	err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
 	if (err) HANDLE_ERROR(err, "setschedpolicy");
 
-	// end up with virtual cores + 1 threads in total
 	for (int i = 0; i < count; ++i) {
 		pthread_t id;
 		err = pthread_create(&id, &attr, HeavyContender, lock);
@@ -63,15 +60,16 @@ static void StartWorkerThreads(size_t count, SpinLock* lock) {
 	}
 }
 
-static SpinLock g_locks[2];
+static SpinLock g_a;
+static SpinLock g_b;
 
 int main() {
-	g_locks[0].lock();
+	g_a.lock();
 
 	const auto concurrency = std::thread::hardware_concurrency();
-	StartWorkerThreads(concurrency, &g_locks[1]);
+	StartWorkerThreads(concurrency, &g_b);
 
-	g_locks[0].unlock();
+	g_a.unlock();
 
 	return 0;
 }
