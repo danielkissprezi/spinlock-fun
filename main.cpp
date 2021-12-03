@@ -61,15 +61,12 @@ static void StartWorkerThreads(size_t count, SpinLock* lock) {
 }
 
 static SpinLock g_a;
-static SpinLock g_b;
 
 int main() {
 	g_a.lock();
 
 	const auto concurrency = std::thread::hardware_concurrency();
-	StartWorkerThreads(concurrency, &g_b);
-
-	g_a.unlock();
+	StartWorkerThreads(concurrency, &g_a);
 
 	return 0;
 }
