@@ -38,8 +38,8 @@ static void* HeavyContender(void* param) {
 	return nullptr;
 }
 
-static void StartWorkerThreads(size_t count, SpinLock* lock) {
-	struct sched_param param;
+static pthread_attr_t GetThreadAttributes() {
+	sched_param param;
 	pthread_attr_t attr;
 	auto err = pthread_attr_init(&attr);
 	if (err) HANDLE_ERROR(1, "pthread_attr_init");
@@ -51,20 +51,25 @@ static void StartWorkerThreads(size_t count, SpinLock* lock) {
 	err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
 	if (err) HANDLE_ERROR(err, "setschedpolicy");
 
+	return attr;
+}
+
+static void StartWorkerThreads(size_t count, SpinLock* lock) {
+	auto attr = GetThreadAttributes();
+
 	for (int i = 0; i < count; ++i) {
 		pthread_t id;
-		err = pthread_create(&id, &attr, HeavyContender, lock);
+		auto err = pthread_create(&id, &attr, HeavyContender, lock);
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
 }
 
-static SpinLock g_a;
+static SpinLock g_lock;
 
 int main() {
-	g_a.lock();
-
+	g_lock.lock();
 	const auto concurrency = std::thread::hardware_concurrency();
-	StartWorkerThreads(concurrency, &g_a);
+	StartWorkerThreads(concurrency, &g_lock);
 
 	return 0;
 }
