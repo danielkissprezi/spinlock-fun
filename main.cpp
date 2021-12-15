@@ -5,7 +5,6 @@
 #include <atomic>
 #include <thread>
 
-
 struct SpinLock {
 	std::atomic<bool> locked{false};
 
@@ -20,29 +19,29 @@ struct SpinLock {
 	}
 };
 
-static void* HeavyContender(void* param) {
-	auto* l = (SpinLock*)param;
+static SpinLock g_lock;
 
-	l->lock();
+static void* HeavyContender(void* /*param*/) {
+	g_lock.lock();
+    g_lock.unlock();
 
 	return nullptr;
 }
 
-static void StartWorkerThreads(size_t count, SpinLock* lock) {
+static void StartWorkerThreads(size_t count) {
 	auto attr = GetThreadAttributes();
 	for (int i = 0; i < count; ++i) {
 		pthread_t id;
-		auto err = pthread_create(&id, &attr, HeavyContender, lock);
+		auto err = pthread_create(&id, &attr, HeavyContender, nullptr);
 		if (err) HANDLE_ERROR(err, "pthread_create");
 	}
 }
 
-static SpinLock g_lock;
-
 int main() {
 	g_lock.lock();
 	const auto concurrency = std::thread::hardware_concurrency();
-	StartWorkerThreads(concurrency, &g_lock);
+	StartWorkerThreads(concurrency);
+	g_lock.unlock();
 
 	return 0;
 }
