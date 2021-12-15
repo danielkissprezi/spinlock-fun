@@ -12,9 +12,6 @@ struct SpinLock {
 	void lock() {
 		while (locked.exchange(true, std::memory_order_acquire)) {
 			// busy wait
-			/*
-			std::this_thread::yield();
-			//*/
 		}
 	}
 
