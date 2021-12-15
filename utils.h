@@ -20,12 +20,12 @@ static inline pthread_attr_t GetThreadAttributes() {
 	pthread_attr_t attr;
 	auto err = pthread_attr_init(&attr);
 	if (err) HANDLE_ERROR(1, "pthread_attr_init");
-	param.sched_priority = sched_get_priority_max(SCHED_RR);
+	param.sched_priority = sched_get_priority_max(SCHED_FIFO);
 
 	err = pthread_attr_setschedparam(&attr, &param);
 	if (err) HANDLE_ERROR(err, "pthread_attr_setschedparam");
 
-	err = pthread_attr_setschedpolicy(&attr, SCHED_RR);
+	err = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 	if (err) HANDLE_ERROR(err, "setschedpolicy");
 
 	return attr;
