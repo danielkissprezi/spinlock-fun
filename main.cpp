@@ -22,8 +22,8 @@ struct SpinLock {
 static SpinLock g_lock;
 
 static void* HeavyContender(void* /*param*/) {
-	g_lock.lock();
-    g_lock.unlock();
+	g_lock.lock();	
+	g_lock.unlock();
 
 	return nullptr;
 }
